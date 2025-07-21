@@ -19,11 +19,20 @@ func (a *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 func (a *apiConfig) handlerMetrics(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	w.Header().Add("Cache-Control", "no-cache")
 	w.WriteHeader(http.StatusOK)
-	s := fmt.Sprintf("Hits: %v", a.fileserverHits.Load())
-	w.Write([]byte(s))
+	_, err := fmt.Fprintf(w, `
+<html>
+  <body>
+    <h1>Welcome, Chirpy Admin</h1>
+    <p>Chirpy has been visited %d times!</p>
+  </body>
+</html>
+	`, a.fileserverHits.Load())
+	if err != nil {
+		log.Printf("write response failed: %v", err)
+	}
 }
 
 func (a *apiConfig) handlerResetMetrics(w http.ResponseWriter, _ *http.Request) {
@@ -48,9 +57,9 @@ func main() {
 	})
 
 	// metrics api
-	mux.HandleFunc("GET /api/metrics", apiCfg.handlerMetrics)
+	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	// reset metrics api
-	mux.HandleFunc("POST /api/reset", apiCfg.handlerResetMetrics)
+	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetMetrics)
 
 	// serve static files
 	fileServer := apiCfg.middlewareMetricsInc(
