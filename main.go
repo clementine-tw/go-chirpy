@@ -61,6 +61,8 @@ func main() {
 	// reset metrics api
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetMetrics)
 
+	mux.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
+
 	// serve static files
 	fileServer := apiCfg.middlewareMetricsInc(
 		http.FileServer(http.Dir(".")),
