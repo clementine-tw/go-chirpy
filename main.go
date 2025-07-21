@@ -41,16 +41,16 @@ func main() {
 	mux := http.NewServeMux()
 
 	// healthcheck api
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
 
 	// metrics api
-	mux.HandleFunc("/metrics", apiCfg.handlerMetrics)
+	mux.HandleFunc("GET /metrics", apiCfg.handlerMetrics)
 	// reset metrics api
-	mux.HandleFunc("/reset", apiCfg.handlerResetMetrics)
+	mux.HandleFunc("POST /reset", apiCfg.handlerResetMetrics)
 
 	// serve static files
 	fileServer := apiCfg.middlewareMetricsInc(
