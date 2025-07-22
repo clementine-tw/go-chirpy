@@ -37,9 +37,9 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	validBody := struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}{
-		Valid: true,
+		CleanedBody: replaceProfane(params.Body),
 	}
 
 	respondWithJSON(
