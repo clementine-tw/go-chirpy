@@ -10,9 +10,11 @@ import (
 
 	"github.com/clementine-tw/go-chirpy/internal/database"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
+	platform       string
 	db             *database.Queries
 	fileserverHits atomic.Int32
 }
@@ -41,12 +43,6 @@ func (a *apiConfig) handlerMetrics(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func (a *apiConfig) handlerResetMetrics(w http.ResponseWriter, _ *http.Request) {
-	a.fileserverHits.Store(0)
-	w.Header().Add("Cache-Control", "no-cache")
-	w.WriteHeader(http.StatusOK)
-}
-
 func main() {
 
 	// load environment variables
@@ -54,6 +50,7 @@ func main() {
 
 	// connect to database
 	dbURL := os.Getenv("DB_URL")
+	platform := os.Getenv("PLATFORM")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -63,7 +60,8 @@ func main() {
 
 	// initialize config
 	apiCfg := &apiConfig{
-		db: dbQueries,
+		platform: platform,
+		db:       dbQueries,
 	}
 
 	const port = "8080"
@@ -79,10 +77,12 @@ func main() {
 
 	// metrics api
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
-	// reset metrics api
-	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetMetrics)
+	// reset users
+	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetUsers)
 
 	mux.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
+
+	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 
 	// serve static files
 	fileServer := apiCfg.middlewareMetricsInc(
