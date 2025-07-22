@@ -8,6 +8,9 @@
 *.so
 *.dylib
 
+# Default binary name of `go build`
+go-chirpy
+
 # Test binary, built with `go test -c`
 *.test
 

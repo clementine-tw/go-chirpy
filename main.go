@@ -1,13 +1,19 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync/atomic"
+
+	"github.com/clementine-tw/go-chirpy/internal/database"
+	"github.com/joho/godotenv"
 )
 
 type apiConfig struct {
+	db             *database.Queries
 	fileserverHits atomic.Int32
 }
 
@@ -43,7 +49,22 @@ func (a *apiConfig) handlerResetMetrics(w http.ResponseWriter, _ *http.Request) 
 
 func main() {
 
-	apiCfg := &apiConfig{}
+	// load environment variables
+	godotenv.Load()
+
+	// connect to database
+	dbURL := os.Getenv("DB_URL")
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatalf("Error connecting database: %v", err)
+	}
+	dbQueries := database.New(db)
+
+	// initialize config
+	apiCfg := &apiConfig{
+		db: dbQueries,
+	}
 
 	const port = "8080"
 
