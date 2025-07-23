@@ -1,24 +1,24 @@
 package main
 
 import (
-	"slices"
 	"strings"
 )
 
-var profanes = []string{
-	"kerfuffle",
-	"sharbert",
-	"fornax",
+var profanes = map[string]struct{}{
+	"kerfuffle": {},
+	"sharbert":  {},
+	"fornax":    {},
 }
 
-const replacement = "****"
-
 func replaceProfane(s string) string {
+	const replacement = "****"
+
 	words := strings.Split(s, " ")
 	for i, word := range words {
-		if slices.Contains(profanes, strings.ToLower(word)) {
+		if _, ok := profanes[word]; ok {
 			words[i] = replacement
 		}
 	}
+
 	return strings.Join(words, " ")
 }

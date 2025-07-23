@@ -80,7 +80,7 @@ func main() {
 	// reset users
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetUsers)
 
-	mux.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
+	mux.HandleFunc("POST /api/chirps", apiCfg.handlerChirpsCreate)
 
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 
