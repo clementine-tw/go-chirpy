@@ -84,6 +84,8 @@ func main() {
 
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerChirpsList)
 
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerChirpsGet)
+
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 
 	// serve static files
