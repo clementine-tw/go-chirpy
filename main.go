@@ -86,7 +86,9 @@ func main() {
 
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerChirpsGet)
 
-	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
+	mux.HandleFunc("POST /api/users", apiCfg.handlerUserCreate)
+
+	mux.HandleFunc("POST /api/login", apiCfg.handlerLogin)
 
 	// serve static files
 	fileServer := apiCfg.middlewareMetricsInc(
