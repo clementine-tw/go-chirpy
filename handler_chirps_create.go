@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/clementine-tw/go-chirpy/internal/auth"
 	"github.com/clementine-tw/go-chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -30,29 +31,40 @@ func validateChirp(body string) (string, error) {
 
 func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request) {
 
-	type parameters struct {
-		Body   string    `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
-	}
-
-	params := parameters{}
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&params)
+	tokenString, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(
 			w,
-			http.StatusInternalServerError,
-			"Error decoding parameters",
+			http.StatusUnauthorized,
+			"Couldn't find JWT",
 			err,
 		)
 		return
 	}
 
-	if len(params.UserID) == 0 {
+	userID, err := auth.ValidateJWT(tokenString, cfg.secret)
+	if err != nil {
 		respondWithError(
 			w,
-			http.StatusBadRequest,
-			"Missing user_id",
+			http.StatusUnauthorized,
+			"Couldn't validate JWT",
+			err,
+		)
+		return
+	}
+
+	type parameters struct {
+		Body string `json:"body"`
+	}
+
+	params := parameters{}
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&params)
+	if err != nil {
+		respondWithError(
+			w,
+			http.StatusInternalServerError,
+			"Error decoding parameters",
 			err,
 		)
 		return
@@ -73,7 +85,7 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 		r.Context(),
 		database.CreateChirpParams{
 			Body:   cleanedBody,
-			UserID: params.UserID,
+			UserID: userID,
 		},
 	)
 

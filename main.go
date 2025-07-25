@@ -15,6 +15,7 @@ import (
 
 type apiConfig struct {
 	platform       string
+	secret         string
 	db             *database.Queries
 	fileserverHits atomic.Int32
 }
@@ -51,6 +52,7 @@ func main() {
 	// connect to database
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
+	secret := os.Getenv("SECRET")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -62,6 +64,7 @@ func main() {
 	apiCfg := &apiConfig{
 		platform: platform,
 		db:       dbQueries,
+		secret:   secret,
 	}
 
 	const port = "8080"
