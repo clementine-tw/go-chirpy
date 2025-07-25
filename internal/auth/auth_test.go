@@ -2,6 +2,9 @@ package auth
 
 import (
 	"testing"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 func TestCheckPasswordHash(t *testing.T) {
@@ -58,4 +61,60 @@ func TestCheckPasswordHash(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMakeJWT(t *testing.T) {
+
+	userID1 := uuid.New()
+	tokenSecret1 := "asd123jdakldvaoijc"
+	expiresIn := 1 * time.Second
+
+	_, err := MakeJWT(userID1, tokenSecret1, expiresIn)
+	if err != nil {
+		t.Errorf("Shouldn't have error: %v", err)
+	}
+}
+
+func TestValidateJWT(t *testing.T) {
+
+	userID1 := uuid.New()
+	tokenSecret := "asd123jdakldvaoijc"
+
+	t.Run("Correct JWT", func(t *testing.T) {
+
+		expiresIn := 1 * time.Second
+		tokenString, _ := MakeJWT(userID1, tokenSecret, expiresIn)
+
+		userID, err := ValidateJWT(tokenString, tokenSecret)
+		if err != nil {
+			t.Errorf("Shouldn't have error: %v", err)
+		}
+		if userID.String() != userID1.String() {
+			t.Errorf("Expected user id: %v, but got: %v", userID1, userID)
+		}
+	})
+
+	t.Run("Expired JWT", func(t *testing.T) {
+
+		expiresIn := 1 * time.Second
+		tokenString, _ := MakeJWT(userID1, tokenSecret, expiresIn)
+
+		time.Sleep(1 * time.Second)
+		_, err := ValidateJWT(tokenString, tokenSecret)
+		if err == nil {
+			t.Error("Should have error")
+		}
+	})
+
+	t.Run("Wrong secret", func(t *testing.T) {
+		expiresIn := 1 * time.Second
+		tokenString, _ := MakeJWT(userID1, tokenSecret, expiresIn)
+
+		wrongSecret := "wrongsecret123123"
+
+		_, err := ValidateJWT(tokenString, wrongSecret)
+		if err == nil {
+			t.Error("Should have error")
+		}
+	})
 }
