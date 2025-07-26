@@ -69,6 +69,17 @@ func (cfg *apiConfig) handlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 		},
 	)
 
+	newJWT, err := auth.MakeJWT(updatedUser.ID, cfg.secret, defaultJWTExpiration)
+	if err != nil {
+		respondWithError(
+			w,
+			http.StatusInternalServerError,
+			"Couldn't make JWT",
+			err,
+		)
+		return
+	}
+
 	respondWithJSON(
 		w,
 		http.StatusOK,
@@ -77,6 +88,7 @@ func (cfg *apiConfig) handlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 			CreatedAt: updatedUser.CreatedAt,
 			UpdatedAt: updatedUser.UpdatedAt,
 			Email:     updatedUser.Email,
+			Token:     newJWT,
 		},
 	)
 
