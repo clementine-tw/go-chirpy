@@ -118,3 +118,16 @@ func TestValidateJWT(t *testing.T) {
 		}
 	})
 }
+
+func TestMakeRefreshToken(t *testing.T) {
+
+	t.Run("check length", func(t *testing.T) {
+		// rune is name alias of int32,
+		// 32 bytes will be encoding to 64 runes hex
+		length := 32 * 2
+		token, _ := MakeRefreshToken()
+		if len(token) != length {
+			t.Errorf("The Length should be %v, but %v", length, len(token))
+		}
+	})
+}

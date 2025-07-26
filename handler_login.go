@@ -1,21 +1,26 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/clementine-tw/go-chirpy/internal/auth"
+	"github.com/clementine-tw/go-chirpy/internal/database"
 )
 
-const defaultExpirationDuration = 1 * time.Hour
+const (
+	defaultJWTExpiration = 1 * time.Hour
+
+	defaultRefreshTokenExpiration = 60 * 24 * time.Hour
+)
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 
 	type parameter struct {
-		Password         string `json:"password"`
-		Email            string `json:"email"`
-		ExpiresInSeconds int    `json:"expires_in_seconds"`
+		Password string `json:"password"`
+		Email    string `json:"email"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -63,11 +68,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expirationDuration := defaultExpirationDuration
-	if params.ExpiresInSeconds > 0 {
-		expirationDuration = time.Duration(params.ExpiresInSeconds) * time.Second
-	}
-	token, err := auth.MakeJWT(user.ID, cfg.secret, expirationDuration)
+	token, err := auth.MakeJWT(user.ID, cfg.secret, defaultJWTExpiration)
 	if err != nil {
 		respondWithError(
 			w,
@@ -78,15 +79,50 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	refreshTokenString, err := auth.MakeRefreshToken()
+	if err != nil {
+		respondWithError(
+			w,
+			http.StatusInternalServerError,
+			"Couldn't make refresh token",
+			err,
+		)
+		return
+	}
+
+	refreshTokenRecord, err := cfg.db.CreateRefreshToken(
+		r.Context(),
+		database.CreateRefreshTokenParams{
+			Token:     refreshTokenString,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			UserID:    user.ID,
+			ExpiresAt: time.Now().Add(defaultRefreshTokenExpiration),
+			RevokedAt: sql.NullTime{
+				Valid: false,
+			},
+		},
+	)
+	if err != nil {
+		respondWithError(
+			w,
+			http.StatusInternalServerError,
+			"Couldn't create refresh token",
+			err,
+		)
+		return
+	}
+
 	respondWithJSON(
 		w,
 		http.StatusOK,
 		User{
-			ID:        user.ID,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-			Email:     user.Email,
-			Token:     token,
+			ID:           user.ID,
+			CreatedAt:    user.CreatedAt,
+			UpdatedAt:    user.UpdatedAt,
+			Email:        user.Email,
+			Token:        token,
+			RefreshToken: refreshTokenRecord.Token,
 		},
 	)
 }

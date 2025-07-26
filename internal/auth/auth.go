@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -101,4 +103,13 @@ func GetBearerToken(header http.Header) (string, error) {
 		return "", errors.New("Malformed authorization header")
 	}
 	return token, nil
+}
+
+// Make a 32 bytes refresh token and return with hex encoding.
+func MakeRefreshToken() (string, error) {
+
+	secure := make([]byte, 32)
+	rand.Read(secure)
+
+	return hex.EncodeToString(secure), nil
 }
