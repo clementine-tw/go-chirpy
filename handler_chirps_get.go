@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"sort"
 
 	"github.com/google/uuid"
 )
@@ -82,6 +83,13 @@ func (cfg *apiConfig) handlerChirpsList(w http.ResponseWriter, r *http.Request) 
 			UpdatedAt: chirp.UpdatedAt,
 			Body:      chirp.Body,
 			UserID:    chirp.UserID,
+		})
+	}
+
+	sortType := r.URL.Query().Get("sort")
+	if sortType == "desc" {
+		sort.Slice(val, func(i, j int) bool {
+			return val[i].CreatedAt.After(val[j].CreatedAt)
 		})
 	}
 
