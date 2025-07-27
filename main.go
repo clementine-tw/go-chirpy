@@ -101,6 +101,8 @@ func main() {
 
 	mux.HandleFunc("PUT /api/users", apiCfg.handlerUsersUpdate)
 
+	mux.HandleFunc("POST /api/polka/webhooks", apiCfg.handlerWebhook)
+
 	// serve static files
 	fileServer := apiCfg.middlewareMetricsInc(
 		http.FileServer(http.Dir(".")),
