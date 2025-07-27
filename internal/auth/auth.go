@@ -113,3 +113,14 @@ func MakeRefreshToken() (string, error) {
 
 	return hex.EncodeToString(secure), nil
 }
+
+// Extract api key from header: Authorization: ApiKey <key>
+func GetAPIKey(header http.Header) (string, error) {
+
+	authHeader := header.Get("Authorization")
+	key, found := strings.CutPrefix(authHeader, "ApiKey ")
+	if !found {
+		return "", errors.New("Malformed authorization header")
+	}
+	return key, nil
+}
